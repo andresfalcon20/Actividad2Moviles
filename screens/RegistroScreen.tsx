@@ -2,30 +2,41 @@ import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../supabase/Config';
 
-export default function LoginScreen({ navigation }: any) {
+export default function RegistroScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nombre, setNombre] = useState('');
 
-  async function login() {
-    if (!email || !password)
+  async function registro() {
+    if (!email || !password || !nombre)
       return Alert.alert('Completa todos los campos');
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    const { data, error } = await supabase.auth.signUp({ email, password });
 
-    if (data.user != null) {
-      navigation.navigate("BottonTabs");
-    } else {
-      Alert.alert("Error", error?.message || "Credenciales incorrectas");
+    if (error) return Alert.alert('Error', error.message);
+
+    if (data.user?.id) {
+      await supabase.from('usuarios').insert({
+        id: data.user.id,
+        nombre: nombre,
+        correo: email
+      });
     }
+
+    Alert.alert('Registro exitoso', 'Ahora inicia sesión');
+    navigation.navigate('Login');
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>TaskHub</Text>
+      <Text style={styles.title}>Crear Cuenta</Text>
 
+      <TextInput
+        placeholder="Nombre completo"
+        onChangeText={setNombre}
+        style={styles.input}
+        placeholderTextColor="#999"
+      />
       <TextInput
         placeholder="Correo"
         onChangeText={setEmail}
@@ -41,12 +52,12 @@ export default function LoginScreen({ navigation }: any) {
         placeholderTextColor="#999"
       />
 
-      <TouchableOpacity style={styles.button} onPress={login}>
-        <Text style={styles.buttonText}>Iniciar Sesión</Text>
+      <TouchableOpacity style={styles.button} onPress={registro}>
+        <Text style={styles.buttonText}>Registrar</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Registro')}>
-        <Text style={styles.linkText}>¿No tienes cuenta? <Text style={styles.linkAccent}>Regístrate</Text></Text>
+      <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <Text style={styles.linkText}>¿Ya tienes cuenta? <Text style={styles.linkAccent}>Inicia sesión</Text></Text>
       </TouchableOpacity>
     </View>
   );
@@ -60,9 +71,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F4F8',
   },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 40,
+    marginBottom: 35,
     textAlign: 'center',
     color: '#2D3748',
   },
@@ -82,7 +93,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   button: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#50C878',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -104,7 +115,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   linkAccent: {
-    color: '#4A90E2',
+    color: '#50C878',
     fontWeight: '600',
   },
 });
